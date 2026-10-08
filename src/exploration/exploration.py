@@ -17,11 +17,12 @@ class Exploration:
 	def __init__(self, dataset: Dataset):
 		self.dataset = dataset
 
-	def _get_diagnosis_features(self, diagnosis: Diagnosis) -> pd.DataFrame:
+	def _get_diagnosis_statistics(self, diagnosis: Diagnosis) -> DiagnosisStatistics:
 		is_in_diagnosis = self.dataset.labels == diagnosis.value
 		diagnosis_features = self.dataset.features[is_in_diagnosis]
+		diagnosis_statistics = DiagnosisStatistics(diagnosis, diagnosis_features)
 
-		return diagnosis_features
+		return diagnosis_statistics
 
 	def _get_feature_aucs(self) -> pd.Series:
 		aucs = {}
@@ -36,14 +37,16 @@ class Exploration:
 		return feature_aucs
 
 	def _get_exploration_table(self) -> pd.DataFrame:
-		table_columns = {}
+		benign_statistics = self._get_diagnosis_statistics(Diagnosis.BENIGN)
+		malignant_statistics = self._get_diagnosis_statistics(Diagnosis.MALIGNANT)
 
-		for diagnosis in Diagnosis:
-			diagnosis_features = self._get_diagnosis_features(diagnosis)
-			diagnosis_statistics = DiagnosisStatistics(diagnosis, diagnosis_features)
-			columns = diagnosis_statistics.get_columns()
-			for column in columns:
-				table_columns[column.name] = column.values
+		benign_columns = benign_statistics.get_columns()
+		malignant_columns = malignant_statistics.get_columns()
+		statistic_columns = benign_columns + malignant_columns
+
+		table_columns = {}
+		for column in statistic_columns:
+			table_columns[column.name] = column.values
 
 		feature_aucs = self._get_feature_aucs()
 		table_columns[AUC_COLUMN] = feature_aucs

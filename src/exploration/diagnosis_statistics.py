@@ -15,24 +15,18 @@ class DiagnosisStatistics:
 
 	def __init__(self, diagnosis: Diagnosis, diagnosis_features: pd.DataFrame):
 		self.diagnosis = diagnosis
-		self.diagnosis_features = diagnosis_features
-		self.statistic_values = {
-			Statistic.MEAN: self.diagnosis_features.mean(),
-			Statistic.STD: self.diagnosis_features.std()
-		}
+		self.means = diagnosis_features.mean()
+		self.stds = diagnosis_features.std()
 
-	def _get_column(self, statistic: Statistic) -> Column:
+	def _get_column(self, statistic: Statistic, values: pd.Series) -> Column:
 		name = f"{self.diagnosis.name}_{statistic.value}"
-		values = self.statistic_values[statistic]
 		column = DiagnosisStatistics.Column(name, values)
 
 		return column
 
 	def get_columns(self) -> list[Column]:
-		columns = []
-		
-		for statistic in Statistic:
-			column = self._get_column(statistic)
-			columns.append(column)
+		mean_column = self._get_column(Statistic.MEAN, self.means)
+		std_column = self._get_column(Statistic.STD, self.stds)
+		columns = [mean_column, std_column]
 
 		return columns
