@@ -9,20 +9,13 @@ from src.exploration.constants import (
 )
 from src.dataset.dataset import Dataset
 from src.types import Diagnosis
-from src.exploration.diagnosis_statistics import DiagnosisStatistics
+from src.dataset.diagnosis_statistics import DiagnosisStatistics
 
 
 class Exploration:
 
 	def __init__(self, dataset: Dataset):
 		self.dataset = dataset
-
-	def _get_diagnosis_statistics(self, diagnosis: Diagnosis) -> DiagnosisStatistics:
-		is_in_diagnosis = self.dataset.labels == diagnosis.value
-		diagnosis_features = self.dataset.features[is_in_diagnosis]
-		diagnosis_statistics = DiagnosisStatistics(diagnosis, diagnosis_features)
-
-		return diagnosis_statistics
 
 	def _get_feature_aucs(self) -> pd.Series:
 		aucs = {}
@@ -37,8 +30,8 @@ class Exploration:
 		return feature_aucs
 
 	def _get_exploration_table(self) -> pd.DataFrame:
-		benign_statistics = self._get_diagnosis_statistics(Diagnosis.BENIGN)
-		malignant_statistics = self._get_diagnosis_statistics(Diagnosis.MALIGNANT)
+		benign_statistics = DiagnosisStatistics(self.dataset, Diagnosis.BENIGN)
+		malignant_statistics = DiagnosisStatistics(self.dataset, Diagnosis.MALIGNANT)
 
 		benign_columns = benign_statistics.get_columns()
 		malignant_columns = malignant_statistics.get_columns()
@@ -82,4 +75,4 @@ class Exploration:
 		self._print_exploration_table(exploration_table)
 		self._save_exploration_table(exploration_table)
 
-		print(f"End exploring the dataset")
+		print("End exploring the dataset")
