@@ -43,6 +43,22 @@ class WeightedVoting:
 
 		return selected_features
 
+	def compute_votes(self, features: pd.DataFrame) -> np.ndarray:
+		selected_values = features[self.selected_features]
+		centered_values = selected_values - self.midpoints
+		feature_votes = centered_values * self.weights
+		vote_sums = feature_votes.sum(axis=1)
+		votes = vote_sums.to_numpy()
+
+		return votes
+
+	def predict_diagnosis(self, features: pd.DataFrame) -> np.ndarray:
+		votes = self.compute_votes(features)
+		is_malignant = votes >= 0
+		predictions = np.where(is_malignant, Diagnosis.MALIGNANT.value, Diagnosis.BENIGN.value)
+
+		return predictions
+
 	def print(self) -> None:
 		weighted_voting_table = pd.DataFrame({
 			WEIGHT_COLUMN: self.weights,
