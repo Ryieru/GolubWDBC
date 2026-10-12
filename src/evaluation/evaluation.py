@@ -135,4 +135,3 @@ class Evaluation:
 		self._save_tables(fold_table, summary_table)
 
 		print("End evaluating the weighted voting")
-	
