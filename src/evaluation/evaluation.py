@@ -21,6 +21,7 @@ class Evaluation:
 
 	def __init__(self, dataset: Dataset):
 		self.dataset = dataset
+		self.fold_results = []
 
 	def _get_splits(self) -> list[Split]:
 		cross_validation = RepeatedStratifiedKFold(n_splits=FOLD_COUNT, n_repeats=REPEAT_COUNT, random_state=SEED)
@@ -123,13 +124,13 @@ class Evaluation:
 	def run(self) -> None:
 		print("\nStart evaluating the weighted voting")
 
-		fold_results = self._get_fold_results()
-		single_example_result = fold_results[0]
+		self.fold_results = self._get_fold_results()
+		single_example_result = self.fold_results[0]
 		confusion_matrix_table = self._get_confusion_matrix_table(single_example_result)
 		self._print_single_example(single_example_result, confusion_matrix_table)
 		self._save_single_example(confusion_matrix_table)
 
-		fold_table = self._get_fold_table(fold_results)
+		fold_table = self._get_fold_table(self.fold_results)
 		summary_table = self._get_summary_table(fold_table)
 		self._print_tables(fold_table, summary_table)
 		self._save_tables(fold_table, summary_table)
