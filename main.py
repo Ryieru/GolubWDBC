@@ -11,10 +11,10 @@ def main() -> None:
 	dataset = load_dataset()
 
 	# 1. Data exploration
-	# 2. Implement weighted voting
 	exploration = Exploration(dataset)
 	exploration.run()
 
+	# 2. Implement weighted voting
 	# 3. Evaluate the model
 	evaluation = Evaluation(dataset)
 	evaluation.run()
