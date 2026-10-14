@@ -6,17 +6,24 @@ from src.comparison.comparison import Comparison
 
 
 def main() -> None:
+
+	# 0. Loading the dataset
 	dataset = load_dataset()
 
+	# 1. Data exploration
+	# 2. Implement weighted voting
 	exploration = Exploration(dataset)
 	exploration.run()
 
+	# 3. Evaluate the model
 	evaluation = Evaluation(dataset)
 	evaluation.run()
 
+	# 4. Evaluate feature selection stability
 	stability = Stability(dataset, evaluation.fold_results)
 	stability.run()
 
+	# 5. Compare
 	comparison = Comparison(evaluation.fold_results)
 	comparison.run()
 
