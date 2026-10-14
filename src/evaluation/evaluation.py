@@ -72,8 +72,8 @@ class Evaluation:
 			table_row = {
 				REPEAT_COLUMN: fold_result.fold.repeat_number,
 				FOLD_COLUMN: fold_result.fold.fold_number,
-				AUC_COLUMN: fold_result.auc,
-				BALANCED_ACCURACY_COLUMN: fold_result.balanced_accuracy
+				AUC_COLUMN: fold_result.metrics.auc,
+				BALANCED_ACCURACY_COLUMN: fold_result.metrics.balanced_accuracy
 			}
 
 			table_rows.append(table_row)
@@ -84,12 +84,12 @@ class Evaluation:
 
 	def _get_summary_table(self, fold_table: pd.DataFrame) -> pd.DataFrame:
 		metric_table = fold_table[METRIC_COLUMNS]
-		summary_table = metric_table.agg(SUMMARY_STATISTICS)
+		summary_table = metric_table.aggregate(SUMMARY_STATISTICS)
 
 		return summary_table
 
 	def _get_confusion_matrix_table(self, fold_result: FoldResult) -> pd.DataFrame:
-		confusion_matrix_table = pd.DataFrame(fold_result.confusion_matrix, index=CONFUSION_MATRIX_ROWS, columns=CONFUSION_MATRIX_COLUMNS)
+		confusion_matrix_table = pd.DataFrame(fold_result.metrics.confusion_matrix, index=CONFUSION_MATRIX_ROWS, columns=CONFUSION_MATRIX_COLUMNS)
 
 		return confusion_matrix_table
 
@@ -100,7 +100,7 @@ class Evaluation:
 		print("\nConfusion matrix:")
 		print(confusion_matrix_table)
 		
-		print(f"AUC: {example_result.auc}, balanced accuracy: {example_result.balanced_accuracy}")
+		print(f"AUC: {example_result.metrics.auc}, balanced accuracy: {example_result.metrics.balanced_accuracy}")
 
 	def _save_single_example(self, confusion_matrix_table: pd.DataFrame) -> None:
 		RESULTS_DIRECTORY.mkdir(exist_ok=True)

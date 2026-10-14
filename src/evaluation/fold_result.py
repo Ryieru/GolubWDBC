@@ -1,10 +1,6 @@
-from sklearn.metrics import (
-	roc_auc_score, balanced_accuracy_score,
-	confusion_matrix
-)
-
 from src.evaluation.fold import Fold
 from src.weighted_voting.weighted_voting import WeightedVoting
+from src.evaluation.metrics import Metrics
 
 
 class FoldResult:
@@ -18,6 +14,4 @@ class FoldResult:
 
 		self.fold = fold
 		self.weighted_voting = weighted_voting
-		self.auc = roc_auc_score(validation_labels, votes)
-		self.balanced_accuracy = balanced_accuracy_score(validation_labels, predictions)
-		self.confusion_matrix = confusion_matrix(validation_labels, predictions)
+		self.metrics = Metrics(validation_labels, votes, predictions)
