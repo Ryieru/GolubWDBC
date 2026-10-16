@@ -1,7 +1,7 @@
 from src.constants import RESULTS_DIRECTORY
 
 
-EXPLORATION_FILE = RESULTS_DIRECTORY / "exploration.csv"
+EXPLORATION_FILE = RESULTS_DIRECTORY / "1_exploration.csv"
 
 FEATURE_COLUMN = "FEATURE"
 AUC_COLUMN = "AUC"

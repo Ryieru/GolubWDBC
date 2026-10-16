@@ -1,8 +1,8 @@
 from src.constants import RESULTS_DIRECTORY
 
 
-FREQUENCY_TABLE_FILE = RESULTS_DIRECTORY / "weighted_voting_selection_frequencies.csv"
-JACCARD_TABLE_FILE = RESULTS_DIRECTORY / "weighted_voting_jaccard.csv"
+FREQUENCY_TABLE_FILE = RESULTS_DIRECTORY / "4_stability.csv"
+JACCARD_TABLE_FILE = RESULTS_DIRECTORY / "4_jaccard.csv"
 
 FEATURE_COLUMN = "FEATURE"
 SELECTION_COUNT_COLUMN = "SELECTION_COUNT"

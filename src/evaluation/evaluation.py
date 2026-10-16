@@ -4,17 +4,17 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from src.constants import RESULTS_DIRECTORY
 from src.evaluation.constants import (
 	FOLD_COUNT, REPEAT_COUNT, SEED,
-	REPEAT_COLUMN, FOLD_COLUMN, AUC_COLUMN,
-	BALANCED_ACCURACY_COLUMN, METRIC_COLUMNS,
-	SUMMARY_STATISTICS, CONFUSION_MATRIX_ROWS,
-	CONFUSION_MATRIX_COLUMNS, FOLD_TABLE_FILE,
-	SUMMARY_TABLE_FILE, SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE
+	MODEL_COLUMN, CONFUSION_MATRIX_ROWS,
+	CONFUSION_MATRIX_COLUMNS, WEIGHTED_VOTING_FILE,
+	EVALUATION_FILE, SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE
 )
 from src.dataset.dataset import Dataset
 from src.evaluation.split import Split
 from src.evaluation.fold import Fold
 from src.evaluation.fold_result import FoldResult
 from src.weighted_voting.weighted_voting import WeightedVoting
+from src.exploration.constants import FEATURE_COLUMN
+from src.evaluation.metric_table import get_metric_table
 
 
 class Evaluation:
@@ -65,33 +65,29 @@ class Evaluation:
 
 		return fold_results
 
-	def _get_fold_table(self, fold_results: list[FoldResult]) -> pd.DataFrame:
-		table_rows = []
+	def _get_metric_table(self) -> pd.DataFrame:
+		fold_metrics = {}
 
-		for fold_result in fold_results:
-			table_row = {
-				REPEAT_COLUMN: fold_result.fold.repeat_number,
-				FOLD_COLUMN: fold_result.fold.fold_number,
-				AUC_COLUMN: fold_result.metrics.auc,
-				BALANCED_ACCURACY_COLUMN: fold_result.metrics.balanced_accuracy
-			}
+		for fold_result in self.fold_results:
+			fold_metrics[fold_result.fold.name] = fold_result.metrics
 
-			table_rows.append(table_row)
+		metric_table = get_metric_table(fold_metrics)
 
-		fold_table = pd.DataFrame(table_rows)
-
-		return fold_table
-
-	def _get_summary_table(self, fold_table: pd.DataFrame) -> pd.DataFrame:
-		metric_table = fold_table[METRIC_COLUMNS]
-		summary_table = metric_table.aggregate(SUMMARY_STATISTICS)
-
-		return summary_table
+		return metric_table
 
 	def _get_confusion_matrix_table(self, fold_result: FoldResult) -> pd.DataFrame:
 		confusion_matrix_table = pd.DataFrame(fold_result.metrics.confusion_matrix, index=CONFUSION_MATRIX_ROWS, columns=CONFUSION_MATRIX_COLUMNS)
 
 		return confusion_matrix_table
+
+	def _print_metric_table(self, metric_table: pd.DataFrame) -> None:
+		print("\nWeighted voting metric table:")
+		print(metric_table)
+
+	def _save_metric_table(self, metric_table: pd.DataFrame) -> None:
+		RESULTS_DIRECTORY.mkdir(exist_ok=True)
+		metric_table.to_csv(EVALUATION_FILE, index_label=MODEL_COLUMN)
+		print(f"Weighted voting metric table saved to '{EVALUATION_FILE}'")
 
 	def _print_single_example(self, example_result: FoldResult, confusion_matrix_table: pd.DataFrame) -> None:
 		print("\nSingle Example (repeat 1, fold 1):")
@@ -100,39 +96,28 @@ class Evaluation:
 		print("\nConfusion matrix:")
 		print(confusion_matrix_table)
 		
-		print(f"AUC: {example_result.metrics.auc}, balanced accuracy: {example_result.metrics.balanced_accuracy}")
+		print(f"AUC: {example_result.metrics.auc}")
+		print(f"balanced accuracy: {example_result.metrics.balanced_accuracy}")
 
-	def _save_single_example(self, confusion_matrix_table: pd.DataFrame) -> None:
+	def _save_single_example(self, weighted_voting_table: pd.DataFrame, confusion_matrix_table: pd.DataFrame) -> None:
 		RESULTS_DIRECTORY.mkdir(exist_ok=True)
+		weighted_voting_table.to_csv(WEIGHTED_VOTING_FILE, index_label=FEATURE_COLUMN)
 		confusion_matrix_table.to_csv(SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE)
-		print(f"Example confusion matrix saved to '{SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE}'")
-
-	def _print_tables(self, fold_table: pd.DataFrame, summary_table: pd.DataFrame) -> None:
-		print("\nFold table:")
-		print(fold_table)
-
-		print("\nSummary:")
-		print(summary_table)
-
-	def _save_tables(self, fold_table: pd.DataFrame, summary_table: pd.DataFrame) -> None:
-		RESULTS_DIRECTORY.mkdir(exist_ok=True)
-		fold_table.to_csv(FOLD_TABLE_FILE, index=False)
-		summary_table.to_csv(SUMMARY_TABLE_FILE)
-		print(f"Fold table saved to '{FOLD_TABLE_FILE}'")
-		print(f"Summary table saved to '{SUMMARY_TABLE_FILE}'")
+		print(f"Single example weighted voting table saved to '{WEIGHTED_VOTING_FILE}'")
+		print(f"Single example confusion matrix saved to '{SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE}'")
 
 	def run(self) -> None:
 		print("\nStart evaluating the weighted voting")
 
 		self.fold_results = self._get_fold_results()
 		single_example_result = self.fold_results[0]
+		weighted_voting_table = single_example_result.weighted_voting.get_table()
 		confusion_matrix_table = self._get_confusion_matrix_table(single_example_result)
 		self._print_single_example(single_example_result, confusion_matrix_table)
-		self._save_single_example(confusion_matrix_table)
+		self._save_single_example(weighted_voting_table, confusion_matrix_table)
 
-		fold_table = self._get_fold_table(self.fold_results)
-		summary_table = self._get_summary_table(fold_table)
-		self._print_tables(fold_table, summary_table)
-		self._save_tables(fold_table, summary_table)
+		metric_table = self._get_metric_table()
+		self._print_metric_table(metric_table)
+		self._save_metric_table(metric_table)
 
 		print("End evaluating the weighted voting")

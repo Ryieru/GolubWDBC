@@ -1,4 +1,5 @@
 from src.dataset.dataset import Dataset
+from src.evaluation.constants import FOLD_NAME_FORMAT
 
 
 class Fold:
@@ -8,3 +9,4 @@ class Fold:
 		self.validation_dataset = validation_dataset
 		self.repeat_number = repeat_number
 		self.fold_number = fold_number
+		self.name = FOLD_NAME_FORMAT.format(repeat_number=repeat_number, fold_number=fold_number)

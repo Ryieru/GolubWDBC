@@ -1,85 +1,57 @@
 import pandas as pd
 
 from src.constants import RESULTS_DIRECTORY
-from src.comparison.constants import (
-    WEIGHTED_VOTING_AUC_COLUMN, LOGISTIC_REGRESSION_AUC_COLUMN,
-    WEIGHTED_VOTING_BALANCED_ACCURACY_COLUMN, LOGISTIC_REGRESSION_BALANCED_ACCURACY_COLUMN,
-    FOLD_TABLE_FILE, SUMMARY_TABLE_FILE, METRIC_COLUMNS
-)
-from src.evaluation.constants import (
-    REPEAT_COLUMN, FOLD_COLUMN, SUMMARY_STATISTICS
-)
+from src.comparison.constants import COMPARISON_FILE
+from src.evaluation.constants import MODEL_COLUMN
 from src.evaluation.fold import Fold
 from src.evaluation.fold_result import FoldResult
 from src.evaluation.metrics import Metrics
 from src.logistic_regression.logistic_regression import LogisticRegression
+from src.evaluation.metric_table import get_metric_table
 
 
 class Comparison:
 
-    def __init__(self, fold_results: list[FoldResult]):
-        self.fold_results = fold_results
+	def __init__(self, fold_results: list[FoldResult]):
+		self.fold_results = fold_results
 
-    def _get_logistic_regression_metrics(self, fold: Fold) -> Metrics:
-        validation_features = fold.validation_dataset.features
-        validation_labels = fold.validation_dataset.labels
+	def _get_logistic_regression_metrics(self, fold: Fold) -> Metrics:
+		validation_features = fold.validation_dataset.features
+		validation_labels = fold.validation_dataset.labels
 
-        logistic_regression = LogisticRegression(fold.training_dataset)
-        malignant_probabilities = logistic_regression.compute_probabilities(validation_features)
-        predictions = logistic_regression.predict_diagnosis(validation_features)
-        logistic_regression_metrics = Metrics(validation_labels, malignant_probabilities, predictions)
+		logistic_regression = LogisticRegression(fold.training_dataset)
+		malignant_probabilities = logistic_regression.compute_probabilities(validation_features)
+		predictions = logistic_regression.predict_diagnosis(validation_features)
+		logistic_regression_metrics = Metrics(validation_labels, malignant_probabilities, predictions)
 
-        return logistic_regression_metrics
+		return logistic_regression_metrics
 
-    def _get_fold_table(self) -> pd.DataFrame:
-        table_rows = []
+	def _get_metric_table(self) -> pd.DataFrame:
+		fold_metrics = {}
 
-        for fold_result in self.fold_results:
-            weighted_voting_metrics = fold_result.metrics
-            logistic_regression_metrics = self._get_logistic_regression_metrics(fold_result.fold)
-            table_row = {
-                REPEAT_COLUMN: fold_result.fold.repeat_number,
-                FOLD_COLUMN: fold_result.fold.fold_number,
-                WEIGHTED_VOTING_AUC_COLUMN: weighted_voting_metrics.auc,
-                LOGISTIC_REGRESSION_AUC_COLUMN: logistic_regression_metrics.auc,
-                WEIGHTED_VOTING_BALANCED_ACCURACY_COLUMN: weighted_voting_metrics.balanced_accuracy,
-                LOGISTIC_REGRESSION_BALANCED_ACCURACY_COLUMN: logistic_regression_metrics.balanced_accuracy
-            }
+		for fold_result in self.fold_results:
+			fold = fold_result.fold
+			logistic_regression_metrics = self._get_logistic_regression_metrics(fold)
+			fold_metrics[fold.name] = logistic_regression_metrics
 
-            table_rows.append(table_row)
+		metric_table = get_metric_table(fold_metrics)
 
-        fold_table = pd.DataFrame(table_rows)
+		return metric_table
 
-        return fold_table
+	def _print_metric_table(self, metric_table: pd.DataFrame) -> None:
+		print("\nLogistic regression metric table:")
+		print(metric_table)
 
-    def _get_summary_table(self, fold_table: pd.DataFrame) -> pd.DataFrame:
-        metric_table = fold_table[METRIC_COLUMNS]
-        summary_table = metric_table.aggregate(SUMMARY_STATISTICS)
+	def _save_metric_table(self, metric_table: pd.DataFrame) -> None:
+		RESULTS_DIRECTORY.mkdir(exist_ok=True)
+		metric_table.to_csv(COMPARISON_FILE, index_label=MODEL_COLUMN)
+		print(f"Logistic regression metric table saved to '{COMPARISON_FILE}'")
 
-        return summary_table
+	def run(self) -> None:
+		print("\nStart comparing the weighted voting with the logistic regression")
 
-    def _print_tables(self, fold_table: pd.DataFrame, summary_table: pd.DataFrame) -> None:
-        print("\nComparison fold table:")
-        print(fold_table)
+		metric_table = self._get_metric_table()
+		self._print_metric_table(metric_table)
+		self._save_metric_table(metric_table)
 
-        print("\nComparison summary table:")
-        print(summary_table)
-
-    def _save_tables(self, fold_table: pd.DataFrame, summary_table: pd.DataFrame) -> None:
-        RESULTS_DIRECTORY.mkdir(exist_ok=True)
-        fold_table.to_csv(FOLD_TABLE_FILE, index=False)
-        summary_table.to_csv(SUMMARY_TABLE_FILE)
-
-        print(f"Comparison fold table saved to '{FOLD_TABLE_FILE}'")
-        print(f"Comparison summary table saved to '{SUMMARY_TABLE_FILE}'")
-
-    def run(self) -> None:
-        print("\nStart comparing the weighted voting with the logistic regression")
-
-        fold_table = self._get_fold_table()
-        summary_table = self._get_summary_table(fold_table)
-
-        self._print_tables(fold_table, summary_table)
-        self._save_tables(fold_table, summary_table)
-        
-        print("\nEnd comparing the weighted voting with the logistic regression")
+		print("\nEnd comparing the weighted voting with the logistic regression")

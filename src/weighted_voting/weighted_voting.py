@@ -59,11 +59,16 @@ class WeightedVoting:
 
 		return predictions
 
-	def print(self) -> None:
+	def get_table(self) -> pd.DataFrame:
 		weighted_voting_table = pd.DataFrame({
 			WEIGHT_COLUMN: self.weights,
 			MIDPOINT_COLUMN: self.midpoints
 		})
+
+		return weighted_voting_table
+
+	def print(self) -> None:
+		weighted_voting_table = self.get_table()
 
 		print("\nWeighted voting table:")
 		print(weighted_voting_table)
