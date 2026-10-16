@@ -1,13 +1,13 @@
-from src.constants import RESULTS_DIRECTORY
+from src.constants import TABLES_DIRECTORY
 
 
 FOLD_COUNT = 5
 REPEAT_COUNT = 3
 SEED = 29
 
-WEIGHTED_VOTING_FILE = RESULTS_DIRECTORY / "2_weighted_voting.csv"
-EVALUATION_FILE = RESULTS_DIRECTORY / "3_evaluation.csv"
-SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE = RESULTS_DIRECTORY / "3_single_example_confusion_matrix.csv"
+WEIGHTED_VOTING_FILE = TABLES_DIRECTORY / "2_weighted_voting.csv"
+EVALUATION_FILE = TABLES_DIRECTORY / "3_evaluation.csv"
+SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE = TABLES_DIRECTORY / "3_single_example_confusion_matrix.csv"
 
 FOLD_NAME_FORMAT = "R{repeat_number}F{fold_number}"
 MODEL_COLUMN = "MODEL"

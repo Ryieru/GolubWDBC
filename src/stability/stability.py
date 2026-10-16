@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.constants import RESULTS_DIRECTORY
+from src.constants import TABLES_DIRECTORY
 from src.stability.constants import (
 	FREQUENCY_TABLE_FILE, JACCARD_TABLE_FILE,
 	FEATURE_COLUMN, SELECTION_COUNT_COLUMN,
@@ -15,7 +15,9 @@ class Stability:
 
 	def __init__(self, dataset: Dataset, fold_results: list[FoldResult]):
 		self.dataset = dataset
-		self.feature_selections = self._get_feature_selections(fold_results) 
+		self.feature_selections = self._get_feature_selections(fold_results)
+		self.frequency_table = pd.DataFrame()
+		self.mean_jaccard_similarity = 0.0
 
 	def _get_feature_selections(self, fold_results: list[FoldResult]) -> list[FeatureSelection]:
 		feature_selections = []
@@ -71,6 +73,37 @@ class Stability:
 
 		return mean_jaccard_similarity
 
+	def get_model_jaccard_similarities(self) -> list[float]:
+		model_jaccard_similarities = []
+
+		for i, model_selection in enumerate(self.feature_selections):
+			jaccard_similarities = []
+			for j, other_selection in enumerate(self.feature_selections):
+				if i == j:
+					continue
+
+				jaccard_similarity = model_selection.get_jaccard_similarity(other_selection)
+				jaccard_similarities.append(jaccard_similarity)
+
+			model_jaccard_similarity = sum(jaccard_similarities) / len(jaccard_similarities)
+			model_jaccard_similarities.append(model_jaccard_similarity)
+
+		return model_jaccard_similarities
+
+	def get_identical_selection_counts(self) -> list[int]:
+		identical_selection_counts = []
+
+		for model_selection in self.feature_selections:
+			identical_selection_count = 0
+			for other_selection in self.feature_selections:
+				jaccard_similarity = model_selection.get_jaccard_similarity(other_selection)
+				if jaccard_similarity == 1:
+					identical_selection_count += 1
+
+			identical_selection_counts.append(identical_selection_count)
+
+		return identical_selection_counts
+
 	def _get_jaccard_table(self, mean_jaccard_similarity: float) -> pd.DataFrame:
 		jaccard_row = {
 			MEAN_JACCARD_COLUMN: [mean_jaccard_similarity]
@@ -88,7 +121,7 @@ class Stability:
 		print(jaccard_table)
 
 	def _save_tables(self, frequency_table: pd.DataFrame, jaccard_table: pd.DataFrame) -> None:
-		RESULTS_DIRECTORY.mkdir(exist_ok=True)
+		TABLES_DIRECTORY.mkdir(parents=True, exist_ok=True)
 		frequency_table.to_csv(FREQUENCY_TABLE_FILE, index_label=FEATURE_COLUMN)
 		jaccard_table.to_csv(JACCARD_TABLE_FILE, index=False)
 
@@ -98,11 +131,11 @@ class Stability:
 	def run(self) -> None:
 		print("\nStart evaluating the feature selection stability")
 
-		frequency_table = self._get_frequency_table()
-		mean_jaccard_similarity = self._get_mean_jaccard_similarity()
-		jaccard_table = self._get_jaccard_table(mean_jaccard_similarity)
+		self.frequency_table = self._get_frequency_table()
+		self.mean_jaccard_similarity = self._get_mean_jaccard_similarity()
+		jaccard_table = self._get_jaccard_table(self.mean_jaccard_similarity)
 
-		self._print_tables(frequency_table, jaccard_table)
-		self._save_tables(frequency_table, jaccard_table)
+		self._print_tables(self.frequency_table, jaccard_table)
+		self._save_tables(self.frequency_table, jaccard_table)
 		
 		print("\nEnd evaluating the feature selection stability")

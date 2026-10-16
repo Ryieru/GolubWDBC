@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.model_selection import RepeatedStratifiedKFold
 
-from src.constants import RESULTS_DIRECTORY
+from src.constants import TABLES_DIRECTORY
 from src.evaluation.constants import (
 	FOLD_COUNT, REPEAT_COUNT, SEED,
 	MODEL_COLUMN, CONFUSION_MATRIX_ROWS,
@@ -22,6 +22,7 @@ class Evaluation:
 	def __init__(self, dataset: Dataset):
 		self.dataset = dataset
 		self.fold_results = []
+		self.metric_table = pd.DataFrame()
 
 	def _get_splits(self) -> list[Split]:
 		cross_validation = RepeatedStratifiedKFold(n_splits=FOLD_COUNT, n_repeats=REPEAT_COUNT, random_state=SEED)
@@ -85,7 +86,7 @@ class Evaluation:
 		print(metric_table)
 
 	def _save_metric_table(self, metric_table: pd.DataFrame) -> None:
-		RESULTS_DIRECTORY.mkdir(exist_ok=True)
+		TABLES_DIRECTORY.mkdir(parents=True, exist_ok=True)
 		metric_table.to_csv(EVALUATION_FILE, index_label=MODEL_COLUMN)
 		print(f"Weighted voting metric table saved to '{EVALUATION_FILE}'")
 
@@ -100,7 +101,7 @@ class Evaluation:
 		print(f"balanced accuracy: {example_result.metrics.balanced_accuracy}")
 
 	def _save_single_example(self, weighted_voting_table: pd.DataFrame, confusion_matrix_table: pd.DataFrame) -> None:
-		RESULTS_DIRECTORY.mkdir(exist_ok=True)
+		TABLES_DIRECTORY.mkdir(parents=True, exist_ok=True)
 		weighted_voting_table.to_csv(WEIGHTED_VOTING_FILE, index_label=FEATURE_COLUMN)
 		confusion_matrix_table.to_csv(SINGLE_EXAMPLE_CONFUSION_MATRIX_FILE)
 		print(f"Single example weighted voting table saved to '{WEIGHTED_VOTING_FILE}'")
@@ -116,8 +117,8 @@ class Evaluation:
 		self._print_single_example(single_example_result, confusion_matrix_table)
 		self._save_single_example(weighted_voting_table, confusion_matrix_table)
 
-		metric_table = self._get_metric_table()
-		self._print_metric_table(metric_table)
-		self._save_metric_table(metric_table)
+		self.metric_table = self._get_metric_table()
+		self._print_metric_table(self.metric_table)
+		self._save_metric_table(self.metric_table)
 
 		print("End evaluating the weighted voting")

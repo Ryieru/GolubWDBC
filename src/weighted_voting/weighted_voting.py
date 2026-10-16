@@ -18,6 +18,7 @@ class WeightedVoting:
 		weights = self._get_weights(malignant_statistics, benign_statistics)
 		midpoints = self._get_midpoints(malignant_statistics, benign_statistics)
 
+		self.feature_weights = weights
 		self.selected_features = self._get_selected_features(weights)
 		self.weights = weights[self.selected_features]
 		self.midpoints = midpoints[self.selected_features]
@@ -43,10 +44,15 @@ class WeightedVoting:
 
 		return selected_features
 
-	def compute_votes(self, features: pd.DataFrame) -> np.ndarray:
+	def compute_feature_votes(self, features: pd.DataFrame) -> pd.DataFrame:
 		selected_values = features[self.selected_features]
 		centered_values = selected_values - self.midpoints
 		feature_votes = centered_values * self.weights
+
+		return feature_votes
+
+	def compute_votes(self, features: pd.DataFrame) -> np.ndarray:
+		feature_votes = self.compute_feature_votes(features)
 		vote_sums = feature_votes.sum(axis=1)
 		votes = vote_sums.to_numpy()
 

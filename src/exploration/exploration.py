@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 
-from src.constants import RESULTS_DIRECTORY
+from src.constants import TABLES_DIRECTORY
 from src.exploration.constants import (
 	EXPLORATION_FILE, FEATURE_COLUMN,
 	AUC_COLUMN
@@ -16,6 +16,7 @@ class Exploration:
 
 	def __init__(self, dataset: Dataset):
 		self.dataset = dataset
+		self.exploration_table = pd.DataFrame()
 
 	def _get_feature_aucs(self) -> pd.Series:
 		aucs = {}
@@ -49,7 +50,7 @@ class Exploration:
 		return exploration_table
 
 	def _save_exploration_table(self, exploration_table: pd.DataFrame) -> None:
-		RESULTS_DIRECTORY.mkdir(exist_ok=True)
+		TABLES_DIRECTORY.mkdir(parents=True, exist_ok=True)
 		exploration_table.to_csv(EXPLORATION_FILE, index_label=FEATURE_COLUMN)
 		print(f"Exploration table saved to '{EXPLORATION_FILE}'")
 
@@ -71,8 +72,8 @@ class Exploration:
 
 		self._print_dataset_size()
 
-		exploration_table = self._get_exploration_table()
-		self._print_exploration_table(exploration_table)
-		self._save_exploration_table(exploration_table)
+		self.exploration_table = self._get_exploration_table()
+		self._print_exploration_table(self.exploration_table)
+		self._save_exploration_table(self.exploration_table)
 
 		print("End exploring the dataset")

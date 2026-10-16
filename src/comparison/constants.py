@@ -1,4 +1,4 @@
-from src.constants import RESULTS_DIRECTORY
+from src.constants import TABLES_DIRECTORY
 
 
-COMPARISON_FILE = RESULTS_DIRECTORY / "5_comparison.csv"
+COMPARISON_FILE = TABLES_DIRECTORY / "5_comparison.csv"
